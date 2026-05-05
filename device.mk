@@ -71,3 +71,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_SOONG_NAMESPACES += device/spacemit/k1/mesa
 PRODUCT_SOONG_NAMESPACES += external/minigbm/gbm_mesa_driver
 
+# Override preloaded-classes to drop android.renderscript.* entries —
+# RenderScript is deprecated since API 31 and not built on RISC-V, so Zygote
+# logs warnings on every preload attempt. The device file is the upstream list
+# minus those entries.
+PRODUCT_COPY_FILES += \
+    device/spacemit/k1/preloaded-classes:system/etc/preloaded-classes
+
