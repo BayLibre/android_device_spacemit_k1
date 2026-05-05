@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mixer controls configuration for BananaPi BPI-F3 (ES8326B codec)
+     Maps ES8326 ALSA controls to BayLibre Audio HAL functions.
+     The HAL searches for controls by name in order; first match is used.
+-->
+<mixerControls>
+    <!-- Master DAC volume (overall output level) -->
+    <control function="MASTER_VOLUME" type="int">
+        <name>DAC Playback Volume</name>
+    </control>
+
+    <!-- Hardware volume (per-device: headphone then speaker fallback) -->
+    <control function="HW_VOLUME" type="int">
+        <name>HPL Playback Volume</name>
+        <name>SPKL Playback Volume</name>
+    </control>
+
+    <!-- Microphone mute via ALC switch -->
+    <control function="MIC_SWITCH" type="bool">
+        <name>ALC Capture Switch</name>
+    </control>
+
+    <!-- Microphone gain (ADC capture volume) -->
+    <control function="MIC_GAIN" type="int">
+        <name>ADC Capture Volume</name>
+    </control>
+</mixerControls>
