@@ -1,0 +1,224 @@
+soong_namespace {}
+
+cc_prebuilt_library_shared {
+    name: "libGLES_mesa",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/egl/libGLES_mesa.so"],
+    shared_libs: [
+        "android.hardware.graphics.mapper@4.0",
+        "libc",
+        "libc++",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "libgallium_dri",
+        "libgralloctypes",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libm",
+        "libnativewindow",
+        "libsync",
+        "libutils",
+    ],
+    relative_install_path: "egl",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "libGLESv1_CM_mesa",
+    stem: "libGLESv1_CM",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/egl/libGLESv1_CM.so"],
+    shared_libs: [
+        "libc",
+        "libgallium_dri",
+    ],
+    relative_install_path: "egl",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "libGLESv2_mesa",
+    stem: "libGLESv2",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/egl/libGLESv2.so"],
+    shared_libs: [
+        "libc",
+        "libgallium_dri",
+    ],
+    relative_install_path: "egl",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "libgallium_dri",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/egl/libgallium_dri.so"],
+    shared_libs: [
+        "libc++",
+        "libc",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "liblog",
+        "libm",
+        "libsync",
+        "libz",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "vulkan.mesa",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/hw/vulkan.mesa.so"],
+    shared_libs: [
+        "android.hardware.graphics.mapper@4.0",
+        "libc",
+        "libc++",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "libgralloctypes",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libm",
+        "libnativewindow",
+        "libsync",
+        "libutils",
+        "libz",
+    ],
+    relative_install_path: "hw",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "libgbm_mesa",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/libgbm_mesa.so"],
+    shared_libs: [
+        "libc",
+        "libc++",
+        "libdl",
+        "libdrm",
+        "liblog",
+        "libm",
+        "libcutils",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "dri_gbm",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/gbm/dri_gbm.so"],
+    shared_libs: [
+        "libc",
+        "libcutils",
+        "libdrm",
+        "libgallium_dri",
+        "libm",
+    ],
+    relative_install_path: "gbm",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "zink_dri",
+    stem: "zink_dri",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/dri/zink_dri.so"],
+    shared_libs: [
+        "libc",
+        "libc++",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "liblog",
+        "libm",
+        "libsync",
+        "libz",
+    ],
+    relative_install_path: "dri",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "powervr_dri",
+    stem: "powervr_dri",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/dri/powervr_dri.so"],
+    shared_libs: [
+        "libc",
+        "libc++",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "liblog",
+        "libm",
+        "libsync",
+        "libz",
+    ],
+    relative_install_path: "dri",
+    strip: {
+        none: true,
+    },
+}
+
+cc_prebuilt_library_shared {
+    name: "spacemit_dri",
+    stem: "spacemit_dri",
+    proprietary: true,
+    compile_multilib: "64",
+    srcs: ["lib64/dri/spacemit_dri.so"],
+    shared_libs: [
+        "libc",
+        "libc++",
+        "libcutils",
+        "libdl",
+        "libdrm",
+        "liblog",
+        "libm",
+        "libsync",
+        "libz",
+    ],
+    relative_install_path: "dri",
+    strip: {
+        none: true,
+    },
+}
+
+prebuilt_etc {
+    name: "vulkan_mesa_icd",
+    proprietary: true,
+    src: "etc/vulkan/icd.d/vulkan_mesa.json",
+    sub_dir: "vulkan/icd.d",
+    filename: "vulkan_mesa.json",
+}
