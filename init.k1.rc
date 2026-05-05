@@ -1,0 +1,17 @@
+on early-init
+    mount debugfs debugfs /sys/kernel/debug mode=0755
+
+on init
+    symlink /sdcard /storage/sdcard0
+
+on fs
+    mount_all /vendor/etc/fstab.k1 --early
+
+on late-fs
+    mount_all /vendor/etc/fstab.k1 --late
+
+on boot
+    chown system system /sys/class/backlight/backlight/brightness
+    chmod 0664 /sys/class/backlight/backlight/brightness
+
+    # Stay-on is managed via SettingsProvider overlay (def_stay_on_while_plugged_in)
