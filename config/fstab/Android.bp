@@ -1,0 +1,20 @@
+// Copyright (C) 2024 The Android Open Source Project
+// SPDX-License-Identifier: Apache-2.0
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+genrule {
+    name: "gen_fstab_k1",
+    srcs: ["fstab.in"],
+    out: ["fstab.k1"],
+    cmd: "sed 's/@mmc_node@/soc:storage-bus\\/d4281000.mmc/g' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "fstab.k1",
+    src: ":gen_fstab_k1",
+    vendor: true,
+    vendor_ramdisk_available: true,
+}
