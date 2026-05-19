@@ -36,7 +36,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     vendor.hwc.drm.internal_display_names=HDMI-A-1 \
     ro.vendor.boot_security_patch=2025-01-05 \
     config.disable_renderscript=true \
-    ro.vendor.hwc.use_overlay_planes=false \
+    ro.vendor.hwc.use_overlay_planes=true \
     ro.sf.lcd_density=240
 
 # Audio mixer controls (BPI-F3 / ES8326B codec)
