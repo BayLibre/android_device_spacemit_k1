@@ -12,3 +12,7 @@ pselect6: 1
 sched_getaffinity: 1
 setsockopt: 1
 sysinfo: 1
+# Mesa upstream u_cpu_detect.c calls syscall(__NR_riscv_hwprobe = 258) to
+# query RISC-V HW features at runtime (instead of parsing /proc/cpuinfo).
+# Without this, _util_cpu_detect_once crashes mediaswcodec via SIGSYS.
+riscv_hwprobe: 1
