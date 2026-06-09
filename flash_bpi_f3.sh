@@ -21,6 +21,17 @@ set -euo pipefail
 # ============================================================================
 IMG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Bootloader dir for the selected board (overridden by --board). The Android
+# images (boot/super/vendor_boot/vbmeta) are shared: vendor_boot carries a
+# multi-DTB dtb.img (both k1-bananapi-f3 and k1-musepi-pro) and U-Boot selects
+# the matching one at boot — so only the bootloader location is per-board.
+BL="${IMG}"
+
+# Target board (set in main): bananapi (boots eMMC) | musepi-pro (boots SPI-NOR).
+# On the MusePi Pro the bootloader must live in SPI-NOR (the K1 boot strap is
+# NOR there); Android still goes to eMMC.
+BOARD="bananapi"
+
 # Fastboot binary
 FASTBOOT=$(command -v fastboot 2>/dev/null || true)
 
@@ -89,14 +100,14 @@ check_files() {
 dfu_stage() {
     info "Step 1: Staging FSBL into BROM..."
     wait_for_device 10 "DFU device (361c:1001)"
-    ${FASTBOOT} stage "${IMG}/factory/FSBL.bin"
+    ${FASTBOOT} stage "${BL}/factory/FSBL.bin"
     ${FASTBOOT} continue
     info "BROM executing FSBL..."
     sleep 5
 
     info "Step 2: Staging U-Boot into SPL..."
     wait_for_device 30 "SPL fastboot"
-    ${FASTBOOT} stage "${IMG}/u-boot.itb"
+    ${FASTBOOT} stage "${BL}/u-boot.itb"
     ${FASTBOOT} continue
     info "SPL executing U-Boot..."
     sleep 5
@@ -109,13 +120,34 @@ dfu_stage() {
 # Flash bootloader partitions
 # ============================================================================
 flash_bootloader() {
-    info "Flashing bootloader partitions..."
-    [ -f "${IMG}/factory/bootinfo_emmc.bin" ] && ${FASTBOOT} flash bootinfo "${IMG}/factory/bootinfo_emmc.bin"
-    ${FASTBOOT} flash fsbl "${IMG}/factory/FSBL.bin"
-    ${FASTBOOT} flash env "${IMG}/env.bin"
-    ${FASTBOOT} flash opensbi "${IMG}/fw_dynamic.itb"
-    ${FASTBOOT} flash uboot "${IMG}/u-boot.itb"
+    info "Flashing bootloader partitions (${BL})..."
+    [ -f "${BL}/factory/bootinfo_emmc.bin" ] && ${FASTBOOT} flash bootinfo "${BL}/factory/bootinfo_emmc.bin"
+    ${FASTBOOT} flash fsbl "${BL}/factory/FSBL.bin"
+    ${FASTBOOT} flash env "${BL}/env.bin"
+    ${FASTBOOT} flash opensbi "${BL}/fw_dynamic.itb"
+    ${FASTBOOT} flash uboot "${BL}/u-boot.itb"
     ok "Bootloader flashed"
+}
+
+# ============================================================================
+# Flash bootloader to SPI-NOR (MUSE-Pi-Pro boots from NOR, not eMMC)
+# Writes the MTD layout (partition_nor.json) then the bootloader blobs.
+# Android is flashed to eMMC separately. Must run while only the NOR MTD
+# table is active (before the eMMC Android GPT) so partition names resolve
+# unambiguously to NOR.
+# ============================================================================
+flash_bootloader_nor() {
+    info "Flashing bootloader to SPI-NOR (${BL})..."
+    # "flash mtd" (not "gpt") sets the K1 fastboot routing to the MTD/NOR
+    # device (flash() toggles on the literal "mtd"/"gpt" arg). It parses the
+    # mtd table; the subsequent named partitions then resolve to NOR.
+    ${FASTBOOT} flash mtd "${BL}/partition_nor.json"
+    ${FASTBOOT} flash bootinfo "${BL}/factory/bootinfo_spinor.bin"
+    ${FASTBOOT} flash fsbl "${BL}/factory/FSBL.bin"
+    ${FASTBOOT} flash env "${BL}/env.bin"
+    ${FASTBOOT} flash opensbi "${BL}/fw_dynamic.itb"
+    ${FASTBOOT} flash uboot "${BL}/u-boot.itb"
+    ok "Bootloader flashed to SPI-NOR"
 }
 
 # ============================================================================
@@ -177,11 +209,15 @@ flash_super() {
 flash_userdata() {
     info "Flashing userdata..."
     ${FASTBOOT} flash userdata "${IMG}/userdata.img"
+    # The K1 U-Boot fastboot 'format' can't resolve some partitions on certain
+    # boards ("incorrect device type / cannot find partition") even though
+    # 'flash' works via its mmc fallback. metadata/persist are formatted by
+    # Android (vold/init) on first boot anyway, so don't let this abort the flash.
     info "Formatting metadata (f2fs)..."
-    ${FASTBOOT} format:f2fs metadata
+    ${FASTBOOT} format:f2fs metadata || warn "metadata format unsupported by U-Boot fastboot; Android will format it on first boot"
     info "Formatting persist (ext4)..."
-    ${FASTBOOT} format:ext4 persist
-    ok "Userdata + metadata + persist ready"
+    ${FASTBOOT} format:ext4 persist || warn "persist format unsupported by U-Boot fastboot; Android will format it on first boot"
+    ok "Userdata flashed (metadata/persist deferred to first boot if format is unsupported)"
 }
 
 # ============================================================================
@@ -199,7 +235,11 @@ mode_all() {
     echo ""
 
     wait_for_device 30 "U-Boot fastboot (run 'fastboot usb 0' on board)"
-    flash_bootloader
+    if [ "${BOARD}" = "musepi-pro" ]; then
+        flash_bootloader_nor
+    else
+        flash_bootloader
+    fi
     flash_android_boot
     flash_super
 
@@ -229,7 +269,11 @@ mode_bootloader() {
     echo ""
 
     wait_for_device 15 "U-Boot fastboot (run 'fastboot usb 0' on board)"
-    flash_bootloader
+    if [ "${BOARD}" = "musepi-pro" ]; then
+        flash_bootloader_nor
+    else
+        flash_bootloader
+    fi
 
     echo ""
     ok "Done! Reboot the board to use new bootloader."
@@ -285,13 +329,19 @@ mode_dfu() {
     # DFU staging: BROM -> FSBL -> U-Boot
     dfu_stage
 
-    # Write GPT
-    info "Writing GPT partition table..."
-    ${FASTBOOT} flash gpt "${IMG}/partition_android.json"
-    ok "GPT written"
-
-    # Flash everything
-    flash_bootloader
+    # Bootloader + partition tables (boot media differs per board)
+    if [ "${BOARD}" = "musepi-pro" ]; then
+        # Pro boots from SPI-NOR: bootloader -> NOR first, then Android -> eMMC
+        flash_bootloader_nor
+        info "Writing Android GPT (eMMC)..."
+        ${FASTBOOT} flash gpt "${BL}/partition_android.json"
+        ok "Android GPT written"
+    else
+        info "Writing GPT partition table..."
+        ${FASTBOOT} flash gpt "${BL}/partition_android.json"
+        ok "GPT written"
+        flash_bootloader
+    fi
     flash_android_boot
     flash_super
 
@@ -320,20 +370,23 @@ Modes:
   --dfu           Full DFU flash (board in BROM mode, first-time setup)
 
 Options:
+  --board <name>  Target board: bananapi (default) | musepi-pro
   --wipe          Also flash userdata (clean install)
   --no-avb        Disable AVB verification (for bringup/development)
   --help          Show this help
 
 Examples:
-  ./flash_bpi_f3.sh                  # Flash everything via fastboot
-  ./flash_bpi_f3.sh --android        # Flash only Android images
-  ./flash_bpi_f3.sh --dfu --wipe     # First-time DFU setup with clean userdata
+  ./flash_bpi_f3.sh                       # Flash everything (BananaPi F3)
+  ./flash_bpi_f3.sh --board musepi-pro    # Flash everything (MusePi Pro)
+  ./flash_bpi_f3.sh --android             # Flash only Android images
+  ./flash_bpi_f3.sh --dfu --wipe          # First-time DFU setup with clean userdata
 EOF
 }
 
 main() {
     local mode="all"
     local do_wipe=false
+    local board="bananapi"
     DISABLE_AVB=false
 
     while [[ $# -gt 0 ]]; do
@@ -343,17 +396,29 @@ main() {
             --dfu)           mode="dfu"; shift ;;
             --wipe)          do_wipe=true; shift ;;
             --no-avb)        DISABLE_AVB=true; shift ;;
+            --board)         board="$2"; shift 2 ;;
             --help|-h)       usage; exit 0 ;;
             *) die "Unknown option: $1 (see --help)" ;;
         esac
     done
 
+    # Select the per-board bootloader dir (Android images are shared: the
+    # multi-DTB vendor_boot lets U-Boot pick the right board DTB at runtime).
+    case "${board}" in
+        bananapi|bpi-f3|k1) BL="${IMG}"; BOARD="bananapi" ;;
+        musepi-pro|musepi)
+            BL="${IMG}/musepi-pro"; BOARD="musepi-pro"
+            [ -f "${BL}/u-boot.itb" ] || die "MusePi Pro bootloader not found at ${BL}. Build it first: in the bootloaders/ tree run './build-bootloaders/release_android.sh --aosp=<aosp>' (no --config), then rebuild AOSP." ;;
+        *) die "Unknown board: ${board} (use: bananapi | musepi-pro)" ;;
+    esac
+
     echo ""
     echo "============================================"
-    echo " BananaPi BPI-F3 - Android Flash Tool"
-    echo " Spacemit K1 (RISC-V)"
+    echo " SpacemiT K1 (RISC-V) - Android Flash Tool"
+    echo " Board: ${board}"
     echo "============================================"
-    echo " Images: ${IMG}"
+    echo " Android images: ${IMG}"
+    echo " Bootloader:     ${BL}"
     echo ""
 
     case "${mode}" in
