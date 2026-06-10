@@ -11,6 +11,11 @@ include device/spacemit/common/BoardConfigCommon.mk
 TARGET_BOARD_PLATFORM := k1
 TARGET_BOOTLOADER_BOARD_NAME := k1
 
+# CPU: SpaceMit X60.  Enables the extended ISA flags / -mcpu tuning declared
+# by the "x60" arch variant in build/soong/cc/config/riscv64_device.go
+# (rv64gcv_zba_zbb_zbs_zicond_zfh_zvfh_zicboz_zicbop_zbc_zkt, -mcpu=spacemit-x60).
+TARGET_ARCH_VARIANT := x60
+
 # Kernel
 TARGET_KERNEL_USE ?= mainline
 KERNEL_MODULES_PATH := device/spacemit/k1-kernel/$(TARGET_KERNEL_USE)
