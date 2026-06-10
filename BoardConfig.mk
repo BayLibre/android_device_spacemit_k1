@@ -20,9 +20,25 @@ TARGET_PREBUILT_KERNEL := $(KERNEL_MODULES_PATH)/Image
 
 # Kernel modules
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/ramdisk/*.ko)
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES)
+# spacemit-ccu.ko (CCU core) MUST load before spacemit-ccu-k1.ko, but the
+# alphabetical $(wildcard) order puts "spacemit-ccu-k1.ko" first ('-' < '.'),
+# so the K1 clk driver loads with unresolved spacemit_ccu_* symbols -> no clocks
+# -> pinctrl/mmc/i2c/etc defer -> reboot. Force the core first; the rest keep
+# wildcard order (which booted pre-migration).
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := \
+    $(KERNEL_MODULES_PATH)/ramdisk/spacemit-ccu.ko \
+    $(filter-out %/spacemit-ccu.ko,$(BOARD_VENDOR_RAMDISK_KERNEL_MODULES))
 
 BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/vendor_dlkm/*.ko)
+# realtek.ko (RTL8211F PHY) and its phy_package.ko dependency MUST load before
+# k1_emac.ko. The alphabetical $(wildcard) order loads k1_emac first, so emac's
+# MDIO scan binds the PHY to the Generic PHY driver (no rgmii-id RX delay) ->
+# eth0 TX works but RX is dead. Force the PHY modules first; the rest keep
+# wildcard order.
+BOARD_VENDOR_KERNEL_MODULES_LOAD := \
+    $(KERNEL_MODULES_PATH)/vendor_dlkm/phy_package.ko \
+    $(KERNEL_MODULES_PATH)/vendor_dlkm/realtek.ko \
+    $(filter-out %/phy_package.ko %/realtek.ko,$(BOARD_VENDOR_KERNEL_MODULES))
 BOARD_SYSTEM_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/system_dlkm/*.ko)
 BOARD_SYSTEM_KERNEL_MODULES_LOAD := $(BOARD_SYSTEM_KERNEL_MODULES)
 
