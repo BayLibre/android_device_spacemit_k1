@@ -26,6 +26,12 @@ KERNEL_MODULES_PATH := device/spacemit/kernel/$(TARGET_KERNEL_USE)
 # lives here per-board rather than in BoardConfigCommon.mk.
 BOARD_KERNEL_CMDLINE += swiotlb=65536
 
+# Debug aid while the 6.18 bring-up is in progress: of_serial currently fails
+# to probe uart0, and the console handoff takes the earlycon down with it, so
+# the log stops a few seconds in. Keep the boot console alive past the handoff
+# to see the rest. Drop this once uart0 probes.
+BOARD_KERNEL_CMDLINE += keep_bootcon
+
 TARGET_PREBUILT_KERNEL := $(KERNEL_MODULES_PATH)/Image
 # BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_MODULES_PATH)/dtbo.img
 
