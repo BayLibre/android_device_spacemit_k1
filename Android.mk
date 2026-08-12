@@ -4,6 +4,12 @@ LOCAL_PATH := $(call my-dir)
 # Copy bootloader prebuilts and flash script to PRODUCT_OUT
 # Source: vendor/spacemit/k1/bootloader/ (populated by release_android.sh)
 #
+# Every device/*/Android.mk is parsed for all products, and these rules write to
+# the shared $(PRODUCT_OUT). Gate on TARGET_DEVICE so the K1 bootloader rules
+# only fire for a K1 build; otherwise they collide with the K3 rules, which
+# define the same $(PRODUCT_OUT)/u-boot.itb (and friends).
+ifneq ($(filter k1%, $(TARGET_DEVICE)),)
+
 BL_PREBUILT := vendor/spacemit/k1/bootloader
 
 ifneq ($(wildcard $(BL_PREBUILT)/u-boot-release.itb),)
@@ -146,3 +152,5 @@ endif
 droidcore: $(SPACEMIT_MUSEPI_FLASH_FILES)
 
 endif # musepi-pro u-boot-release.itb exists
+
+endif # TARGET_DEVICE is k1*
