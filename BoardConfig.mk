@@ -46,8 +46,11 @@ BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/vendor_dlkm/*.k
 # MDIO scan binds the PHY to the Generic PHY driver (no rgmii-id RX delay) ->
 # eth0 TX works but RX is dead. Force the PHY modules first; the rest keep
 # wildcard order.
+# phy_package.ko is a module on mainline but builtin on 6.18, where it comes
+# with the GKI PHY core, so glob it rather than name it: ordering it only
+# matters when it is a module at all.
 BOARD_VENDOR_KERNEL_MODULES_LOAD := \
-    $(KERNEL_MODULES_PATH)/vendor_dlkm/phy_package.ko \
+    $(wildcard $(KERNEL_MODULES_PATH)/vendor_dlkm/phy_package.ko) \
     $(KERNEL_MODULES_PATH)/vendor_dlkm/realtek.ko \
     $(filter-out %/phy_package.ko %/realtek.ko,$(BOARD_VENDOR_KERNEL_MODULES))
 BOARD_SYSTEM_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/system_dlkm/*.ko)
