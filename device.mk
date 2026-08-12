@@ -20,9 +20,6 @@ LOCAL_KERNEL := device/spacemit/kernel/$(TARGET_KERNEL_USE)/Image
 PRODUCT_COPY_FILES += \
     $(LOCAL_KERNEL):kernel
 
-# Overlays (stay-on, no lockscreen for dev)
-DEVICE_PACKAGE_OVERLAYS := device/spacemit/k1/overlay
-
 # Properties
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.gralloc=minigbm \
@@ -77,4 +74,27 @@ PRODUCT_SOONG_NAMESPACES += external/minigbm/gbm_mesa_driver
 # minus those entries.
 PRODUCT_COPY_FILES += \
     device/spacemit/k1/preloaded-classes:system/etc/preloaded-classes
+
+# ============================================================
+# Per-board bits (moved out of common/device-common.mk so each SoC owns them)
+# ============================================================
+# Fstab (genrule bakes the K1 eMMC node d4281000.mmc)
+PRODUCT_PACKAGES += \
+    fstab.k1 \
+    fstab.k1.vendor_ramdisk
+
+# Init / ueventd
+PRODUCT_COPY_FILES += \
+    device/spacemit/k1/init.k1.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.k1.rc \
+    device/spacemit/k1/init.k1.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.k1.usb.rc \
+    device/spacemit/k1/ueventd.k1.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc
+
+# GPU firmware (PowerVR BXE-2-32 — K1-specific revision)
+PRODUCT_COPY_FILES += \
+    device/spacemit/k1/firmware/powervr/rogue_36.29.52.182_v1.fw:$(TARGET_COPY_OUT_VENDOR)/firmware/powervr/rogue_36.29.52.182_v1.fw
+
+# Board audio_policy config (ES8326 codec)
+PRODUCT_COPY_FILES += \
+    device/spacemit/k1/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    device/spacemit/k1/audio/primary_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/primary_audio_policy_configuration.xml
 
