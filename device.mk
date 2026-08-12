@@ -15,7 +15,7 @@ PRODUCT_PLATFORM := k1
 
 # Kernel
 TARGET_KERNEL_USE ?= mainline
-LOCAL_KERNEL := device/spacemit/k1-kernel/$(TARGET_KERNEL_USE)/Image
+LOCAL_KERNEL := device/spacemit/kernel/$(TARGET_KERNEL_USE)/Image
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_KERNEL):kernel

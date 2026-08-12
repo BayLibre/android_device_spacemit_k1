@@ -11,7 +11,7 @@ ifneq ($(filter k1%, $(TARGET_DEVICE)),)
 MKDTIMG := prebuilts/misc/linux-x86/libufdt/mkdtimg
 DTBIMAGE := $(PRODUCT_OUT)/dtb.img
 
-LOCAL_DTB := device/spacemit/k1-kernel/$(TARGET_KERNEL_USE)
+LOCAL_DTB := device/spacemit/kernel/$(TARGET_KERNEL_USE)
 
 # DTB files for both K1 boards (BananaPi F3 + MusePi Pro). Both are packed into
 # dtb.img (multi-DTB), which BOARD_INCLUDE_DTB_IN_BOOTIMG puts in vendor_boot;
