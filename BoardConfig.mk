@@ -20,6 +20,12 @@ TARGET_ARCH_VARIANT := x60
 TARGET_KERNEL_USE ?= mainline
 KERNEL_MODULES_PATH := device/spacemit/kernel/$(TARGET_KERNEL_USE)
 
+# K1 DRAM starts below the 4GB dma32 limit, so a low (<4GB) swiotlb bounce
+# buffer can be allocated and is wanted for 32-bit DMA masters. K3 has all
+# DRAM above 4GB and must NOT force this (it would fail to reserve), so this
+# lives here per-board rather than in BoardConfigCommon.mk.
+BOARD_KERNEL_CMDLINE += swiotlb=65536
+
 TARGET_PREBUILT_KERNEL := $(KERNEL_MODULES_PATH)/Image
 # BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_MODULES_PATH)/dtbo.img
 
