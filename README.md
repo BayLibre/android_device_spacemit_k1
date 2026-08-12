@@ -27,7 +27,7 @@ There is **no separate MusePi Pro product**. The MusePi Pro boots the same
 
 ## Device tree: parity + small deltas
 
-Both DTBs are built by the kernel (`devices/spacemit/bananapi_f3/BUILD.bazel`,
+Both DTBs are built by the kernel (`devices/spacemit/spacemit_soc/BUILD.bazel`,
 target `spacemit_k1x`) from sources in
 `common/arch/riscv/boot/dts/spacemit/`:
 

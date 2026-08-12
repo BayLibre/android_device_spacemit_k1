@@ -30,7 +30,7 @@ c'est attendu.)
 ## Device tree : parité + petits deltas
 
 Les deux DTB sont buildées par le kernel
-(`devices/spacemit/bananapi_f3/BUILD.bazel`, target `spacemit_k1x`) à partir des
+(`devices/spacemit/spacemit_soc/BUILD.bazel`, target `spacemit_k1x`) à partir des
 sources dans `common/arch/riscv/boot/dts/spacemit/` :
 
 - `k1-bananapi-f3.dtb`
