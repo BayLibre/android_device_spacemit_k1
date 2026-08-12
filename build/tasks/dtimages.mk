@@ -13,12 +13,17 @@ DTBIMAGE := $(PRODUCT_OUT)/dtb.img
 
 LOCAL_DTB := device/spacemit/kernel/$(TARGET_KERNEL_USE)
 
-# DTB files for both K1 boards (BananaPi F3 + MusePi Pro). Both are packed into
-# dtb.img (multi-DTB), which BOARD_INCLUDE_DTB_IN_BOOTIMG puts in vendor_boot;
-# U-Boot selects the matching one by board compatible at boot.
-DTB_FILES := \
-	$(LOCAL_DTB)/k1-bananapi-f3.dtb \
-	$(LOCAL_DTB)/k1-musepi-pro.dtb
+# Every K1 DTB the selected kernel ships gets packed into dtb.img (multi-DTB),
+# which BOARD_INCLUDE_DTB_IN_BOOTIMG puts in vendor_boot; U-Boot selects the
+# matching one by board compatible at boot. Which boards exist depends on
+# TARGET_KERNEL_USE -- mainline builds the BananaPi F3 and the MusePi Pro, the
+# 6.18 tree only the F3 -- so discover them instead of hardcoding a list that
+# would break the build on a kernel that does not have them all.
+DTB_FILES := $(wildcard $(LOCAL_DTB)/k1-*.dtb)
+
+ifeq ($(DTB_FILES),)
+$(error No K1 DTB in $(LOCAL_DTB) (TARGET_KERNEL_USE=$(TARGET_KERNEL_USE)))
+endif
 
 $(DTBIMAGE): $(DTB_FILES) $(MKDTIMG)
 	$(MKDTIMG) create $@ --page_size=4096 $(DTB_FILES)
